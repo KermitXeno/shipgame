@@ -21,10 +21,10 @@ public class AtmosphericsSystem extends ShipSystem {
 
     private static final double DEFAULT_TARGET_TEMPERATURE = 293.15; // 20 C
     private static final double DEFAULT_AIR_PRESSURE = 101.0;        // kPa (~1 atm)
-    private static final double THERMAL_RATE = 8000;                 // J/s of heating/cooling per room
-    private static final double SUPPLY_RATE = 30;                    // mol/s per tile it can add or scrub
+    private static final double THERMAL_RATE = 4000;                 // J/s of heating/cooling per room
+    private static final double SUPPLY_RATE = 10;                    // mol/s per tile it can add or scrub
     private static final double POWER_PER_MOLE = 0.05;               // power cost per mole displaced
-    private static final double POWER_PER_JOULE_M3 = 0.0008;         // power per (Joule * m^3) conditioned
+    private static final double POWER_PER_JOULE_M3 = 0.0016;         // power per (Joule * m^3) conditioned
 
     private double targetTemperature = DEFAULT_TARGET_TEMPERATURE;
     private final double[] targetPressure = new double[Gas.values().length]; // target partial pressure (kPa)

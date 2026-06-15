@@ -34,6 +34,8 @@ public class Atmosphere {
     private static final double DOOR_SEEP = 150;              // J/(K*s) through a (closed) shared door
     private static final double AIR_PER_CREW = 0.0003;        // mol of air a crew member breathes per second
     private static final double CO2_PER_CREW = 0.00025;       // mol of CO2 a crew member exhales per second
+    private static final double SPACE_TEMPERATURE = 3;        // K, the cold background the hull radiates heat to
+    private static final double HULL_LOSS_PER_TILE = 0.8;     // J/(K*s) each tile's hull loses to space
 
     private final Ship ship;
     private final List<Room> rooms = new ArrayList<>();
@@ -144,7 +146,24 @@ public class Atmosphere {
         breathe(dt);
         seep(dt);
         flow(dt, openDoors);
+        hullLoss(dt);
         regulate(dt);
+    }
+
+    /** Every room slowly radiates heat through its hull to cold space, so life support must heat constantly. */
+    private void hullLoss(float dt) {
+        for (Room room : rooms) {
+            double cap = room.gas().heatCapacity();
+            if (cap < 1e-6) {
+                continue;
+            }
+            double t = room.gas().temperature();
+            if (t <= SPACE_TEMPERATURE) {
+                continue;
+            }
+            double q = Math.min(HULL_LOSS_PER_TILE * room.tileCount() * (t - SPACE_TEMPERATURE) * dt, (t - SPACE_TEMPERATURE) * cap);
+            room.gas().addHeat(-q);
+        }
     }
 
     /** Gas tanks release/cool their contents and rupture if over tolerance. */
@@ -162,7 +181,7 @@ public class Atmosphere {
     /** Runs the reaction table in every room (combustion etc.). */
     private void reactRooms(float dt) {
         for (Room room : rooms) {
-            Reactions.react(room.gas(), dt);
+            Reactions.react(room.gas(), room.volume(), dt);
         }
     }
 

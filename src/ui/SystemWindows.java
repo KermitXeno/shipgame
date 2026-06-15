@@ -72,6 +72,7 @@ public class SystemWindows implements Disposable {
         final ShipSystem system;
         float x;
         float y;
+        boolean addOpen; // is the "add gas" dropdown expanded
 
         Win(ShipSystem system, float x, float y) {
             this.system = system;
@@ -88,6 +89,12 @@ public class SystemWindows implements Disposable {
         MixModel mix;
         boolean bar;
         float barFrac;
+        Runnable action;   // gas-entry remove / dropdown toggle / option add
+        Gas gas;           // for gas-entry and option rows
+        boolean gasEntry;  // an active gas with an "x" to remove it
+        boolean dropdown;  // the "add gas" header
+        boolean option;    // an available gas to add (shown when the dropdown is open)
+        boolean open;      // dropdown header state
 
         static Row text(String label) {
             Row r = new Row();
@@ -116,6 +123,30 @@ public class SystemWindows implements Disposable {
         static Row mix(MixModel model) {
             Row r = new Row();
             r.mix = model;
+            return r;
+        }
+
+        static Row gasEntry(Gas gas, Runnable remove) {
+            Row r = new Row();
+            r.gasEntry = true;
+            r.gas = gas;
+            r.action = remove;
+            return r;
+        }
+
+        static Row dropdown(boolean open, Runnable toggle) {
+            Row r = new Row();
+            r.dropdown = true;
+            r.open = open;
+            r.action = toggle;
+            return r;
+        }
+
+        static Row option(Gas gas, Runnable add) {
+            Row r = new Row();
+            r.option = true;
+            r.gas = gas;
+            r.action = add;
             return r;
         }
     }
@@ -173,9 +204,26 @@ public class SystemWindows implements Disposable {
         for (int r = 0; r < rows.size(); r++) {
             Row row = rows.get(r);
             float top = w.y + TH + r * RH;
+            boolean inBand = py >= top && py <= top + RH;
             if (row.mix != null) {
-                if (py >= top && py <= top + RH) {
+                if (inBand) {
                     grabMixBoundary(row.mix, w.x + 10f, W - 20f, px);
+                }
+                continue;
+            }
+            if (row.gasEntry) {
+                float xx = w.x + W - PAD - CLOSE;
+                float xy = top + (RH - CLOSE) / 2f;
+                if (inRect(px, py, xx, xy, CLOSE, CLOSE)) {
+                    row.action.run();
+                    return;
+                }
+                continue;
+            }
+            if (row.dropdown || row.option) {
+                if (inBand) {
+                    row.action.run();
+                    return;
                 }
                 continue;
             }
@@ -199,10 +247,10 @@ public class SystemWindows implements Disposable {
         if (total <= 1e-9) {
             return;
         }
-        Gas[] gases = Gas.values();
+        List<Gas> gases = activeGases(mix);
         double cum = 0;
-        for (int k = 0; k < gases.length - 1; k++) {
-            cum += mix.get(gases[k]);
+        for (int k = 0; k < gases.size() - 1; k++) {
+            cum += mix.get(gases.get(k));
             float bx = barX + barW * (float) (cum / total);
             if (Math.abs(px - bx) <= GRAB) {
                 mixDrag = mix;
@@ -216,18 +264,18 @@ public class SystemWindows implements Disposable {
 
     public boolean touchDragged(int px, int py) {
         if (mixDrag != null) {
-            Gas[] gases = Gas.values();
+            List<Gas> gases = activeGases(mixDrag);
             double total = sumMix(mixDrag);
-            if (total > 1e-9) {
+            if (total > 1e-9 && mixDragK + 1 < gases.size()) {
                 double frac = Math.max(0, Math.min(1, (px - mixBarX) / mixBarW));
                 double cumBelow = 0;
                 for (int i = 0; i <= mixDragK; i++) {
-                    cumBelow += mixDrag.get(gases[i]);
+                    cumBelow += mixDrag.get(gases.get(i));
                 }
                 double desired = frac * total;
                 double delta = desired - cumBelow;
-                Gas a = gases[mixDragK];
-                Gas b = gases[mixDragK + 1];
+                Gas a = gases.get(mixDragK);
+                Gas b = gases.get(mixDragK + 1);
                 delta = Math.max(-mixDrag.get(a), Math.min(delta, mixDrag.get(b)));
                 mixDrag.set(a, mixDrag.get(a) + delta);
                 mixDrag.set(b, mixDrag.get(b) - delta);
@@ -328,6 +376,42 @@ public class SystemWindows implements Disposable {
             drawMix(w, row.mix, top, h);
             return;
         }
+        if (row.gasEntry) {
+            float sw = 8f;
+            batch.setColor(row.gas.r, row.gas.g, row.gas.b, 1f);
+            box(w.x + 12f, top + (RH - sw) / 2f, sw, sw, h);
+            font.setColor(row.gas.r, row.gas.g, row.gas.b, 1f);
+            font.draw(batch, row.gas.label, w.x + 26f, baseline);
+            float xx = w.x + W - PAD - CLOSE;
+            float xy = top + (RH - CLOSE) / 2f;
+            batch.setColor(0.40f, 0.22f, 0.22f, 1f);
+            box(xx, xy, CLOSE, CLOSE, h);
+            font.setColor(1f, 0.85f, 0.85f, 1f);
+            font.draw(batch, "x", xx + 5f, centre(xy, CLOSE, h));
+            return;
+        }
+        if (row.dropdown) {
+            float bx = w.x + 10f;
+            float bw = W - 20f;
+            float by = top + (RH - BTN) / 2f;
+            float bl = centre(by, BTN, h);
+            batch.setColor(0.20f, 0.24f, 0.30f, 1f);
+            box(bx, by, bw, BTN, h);
+            font.setColor(0.85f, 0.90f, 1f, 1f);
+            font.draw(batch, "Add gas", bx + 8f, bl);
+            font.draw(batch, row.open ? "^" : "v", bx + bw - 16f, bl);
+            return;
+        }
+        if (row.option) {
+            float bx = w.x + 18f;
+            float bw = W - 28f;
+            float by = top + (RH - BTN) / 2f;
+            batch.setColor(0.12f, 0.14f, 0.18f, 1f);
+            box(bx, by, bw, BTN, h);
+            font.setColor(row.gas.r, row.gas.g, row.gas.b, 1f);
+            font.draw(batch, row.gas.label, bx + 10f, centre(by, BTN, h));
+            return;
+        }
         font.setColor(0.80f, 0.84f, 0.90f, 1f);
         font.draw(batch, row.label, w.x + 10f, baseline);
         if (row.bar) {
@@ -366,7 +450,7 @@ public class SystemWindows implements Disposable {
         if (total <= 1e-9) {
             return;
         }
-        Gas[] gases = Gas.values();
+        List<Gas> gases = activeGases(mix);
         double cum = 0;
         for (Gas g : gases) {
             float segX = barX + barW * (float) (cum / total);
@@ -377,8 +461,8 @@ public class SystemWindows implements Disposable {
         }
         // boundary handles
         cum = 0;
-        for (int k = 0; k < gases.length - 1; k++) {
-            cum += mix.get(gases[k]);
+        for (int k = 0; k < gases.size() - 1; k++) {
+            cum += mix.get(gases.get(k));
             float bx = barX + barW * (float) (cum / total);
             batch.setColor(0.95f, 0.95f, 1f, 1f);
             box(bx - 1f, barTop - 2f, 2f, BAR_H + 4f, h);
@@ -399,10 +483,10 @@ public class SystemWindows implements Disposable {
     private List<Row> build(Win w) {
         ShipSystem s = w.system;
         if (s instanceof EngineSystem e) {
-            return engineRows(e);
+            return engineRows(w, e);
         }
         if (s instanceof AtmosphericsSystem a) {
-            return atmosRows(a);
+            return atmosRows(w, a);
         }
         if (s instanceof GasStorageSystem t) {
             return tankRows(t);
@@ -416,27 +500,23 @@ public class SystemWindows implements Disposable {
         return List.of(Row.text("No controls."));
     }
 
-    private List<Row> engineRows(EngineSystem e) {
+    private List<Row> engineRows(Win w, EngineSystem e) {
         MixModel mix = mixOf(e);
         List<Row> rows = new ArrayList<>();
-        rows.add(Row.adjust("Heat to", String.format("%.0fK", e.getHeatingTemperature()),
-                () -> e.setHeatingTemperature(e.getHeatingTemperature() - 25),
-                () -> e.setHeatingTemperature(e.getHeatingTemperature() + 25)));
-        rows.add(Row.adjust("Cool above", String.format("%.0fK", e.getCoolingTemperature()),
-                () -> e.setCoolingTemperature(e.getCoolingTemperature() - 25),
-                () -> e.setCoolingTemperature(e.getCoolingTemperature() + 25)));
         rows.add(Row.adjust("Target pressure", String.format("%.0fkPa", sumMix(mix)),
                 () -> scaleMix(mix, -25), () -> scaleMix(mix, 25)));
         rows.add(Row.mix(mix));
+        appendMixEditor(rows, w, mix);
         rows.add(Row.adjust("Exhaust", e.isVentToSpace() ? "Space" : "Tank",
                 e::toggleVentToSpace, e::toggleVentToSpace));
         rows.add(Row.text(String.format("Chamber  %.0fK  %.0fkPa", e.chamber().temperature(), e.chamberPressure())));
-        rows.add(Row.text(String.format("Rated  %.0fK  %.0fkPa", e.getHeatThreshold(), e.getPressureThreshold())));
+        rows.add(Row.text(String.format("Rated  %.0fK  %.0fkPa  cool %.0fK",
+                e.getHeatThreshold(), e.getPressureThreshold(), e.getRatedCooling())));
         rows.add(Row.text(String.format("Power  %+d / s", e.generationPerTick())));
         return rows;
     }
 
-    private List<Row> atmosRows(AtmosphericsSystem a) {
+    private List<Row> atmosRows(Win w, AtmosphericsSystem a) {
         MixModel mix = mixOf(a);
         List<Row> rows = new ArrayList<>();
         rows.add(Row.adjust("Target temp", String.format("%.0fK", a.getTargetTemperature()),
@@ -445,8 +525,55 @@ public class SystemWindows implements Disposable {
         rows.add(Row.adjust("Target pressure", String.format("%.0fkPa", sumMix(mix)),
                 () -> scaleMix(mix, -5), () -> scaleMix(mix, 5)));
         rows.add(Row.mix(mix));
+        appendMixEditor(rows, w, mix);
         rows.add(Row.text(String.format("Power  %+d / s", a.generationPerTick())));
         return rows;
+    }
+
+    /** Appends the gas-mix editor below a mix bar: an "add gas" dropdown plus a removable entry per active gas. */
+    private void appendMixEditor(List<Row> rows, Win w, MixModel mix) {
+        rows.add(Row.dropdown(w.addOpen, () -> w.addOpen = !w.addOpen));
+        if (w.addOpen) {
+            for (Gas g : storedGases()) {
+                if (mix.get(g) <= 0) {
+                    rows.add(Row.option(g, () -> {
+                        addGas(mix, g);
+                        w.addOpen = false;
+                    }));
+                }
+            }
+        }
+        for (Gas g : activeGases(mix)) {
+            rows.add(Row.gasEntry(g, () -> mix.set(g, 0)));
+        }
+    }
+
+    /** Gases currently in a mix (non-zero target), in enum order. */
+    private static List<Gas> activeGases(MixModel mix) {
+        List<Gas> out = new ArrayList<>();
+        for (Gas g : Gas.values()) {
+            if (mix.get(g) > 0) {
+                out.add(g);
+            }
+        }
+        return out;
+    }
+
+    /** Distinct gases the ship has tanks for (the pool the dropdown can add from). */
+    private List<Gas> storedGases() {
+        List<Gas> out = new ArrayList<>();
+        for (ShipSystem s : ship.getSystems()) {
+            if (s instanceof GasStorageSystem t && !out.contains(t.storedGas())) {
+                out.add(t.storedGas());
+            }
+        }
+        return out;
+    }
+
+    /** Adds a gas to the mix at an even share of the current total (or a default if the mix is empty). */
+    private static void addGas(MixModel mix, Gas gas) {
+        List<Gas> active = activeGases(mix);
+        mix.set(gas, active.isEmpty() ? 100 : sumMix(mix) / active.size());
     }
 
     private List<Row> tankRows(GasStorageSystem t) {
@@ -524,17 +651,15 @@ public class SystemWindows implements Disposable {
         return total;
     }
 
-    /** Scales every gas by the same factor to change the total while keeping proportions. */
+    /** Scales every active gas by the same factor to change the total while keeping proportions. */
     private static void scaleMix(MixModel mix, double step) {
         double total = sumMix(mix);
-        double next = Math.max(0, total + step);
-        if (total > 1e-9) {
-            double factor = next / total;
-            for (Gas g : Gas.values()) {
-                mix.set(g, mix.get(g) * factor);
-            }
-        } else if (next > 0) {
-            mix.set(Gas.AIR, next);
+        if (total <= 1e-9) {
+            return; // empty mix: add a gas from the dropdown first
+        }
+        double factor = Math.max(0, total + step) / total;
+        for (Gas g : Gas.values()) {
+            mix.set(g, mix.get(g) * factor);
         }
     }
 
