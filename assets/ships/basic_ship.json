@@ -1,0 +1,344 @@
+{
+  "nodes": [
+    {
+      "id": 0,
+      "x": 2,
+      "y": 6
+    },
+    {
+      "id": 1,
+      "x": 3,
+      "y": 6
+    },
+    {
+      "id": 2,
+      "x": 1,
+      "y": 5
+    },
+    {
+      "id": 3,
+      "x": 2,
+      "y": 5
+    },
+    {
+      "id": 4,
+      "x": 3,
+      "y": 5
+    },
+    {
+      "id": 5,
+      "x": 4,
+      "y": 5
+    },
+    {
+      "id": 6,
+      "x": 1,
+      "y": 4
+    },
+    {
+      "id": 7,
+      "x": 2,
+      "y": 4
+    },
+    {
+      "id": 8,
+      "x": 3,
+      "y": 4
+    },
+    {
+      "id": 9,
+      "x": 4,
+      "y": 4
+    },
+    {
+      "id": 10,
+      "x": 1,
+      "y": 3
+    },
+    {
+      "id": 11,
+      "x": 2,
+      "y": 3
+    },
+    {
+      "id": 12,
+      "x": 3,
+      "y": 3
+    },
+    {
+      "id": 13,
+      "x": 4,
+      "y": 3
+    },
+    {
+      "id": 14,
+      "x": 0,
+      "y": 2
+    },
+    {
+      "id": 15,
+      "x": 1,
+      "y": 2
+    },
+    {
+      "id": 16,
+      "x": 2,
+      "y": 2
+    },
+    {
+      "id": 17,
+      "x": 3,
+      "y": 2
+    },
+    {
+      "id": 18,
+      "x": 4,
+      "y": 2
+    },
+    {
+      "id": 19,
+      "x": 5,
+      "y": 2
+    },
+    {
+      "id": 20,
+      "x": 0,
+      "y": 1
+    },
+    {
+      "id": 21,
+      "x": 1,
+      "y": 1
+    },
+    {
+      "id": 22,
+      "x": 2,
+      "y": 1
+    },
+    {
+      "id": 23,
+      "x": 3,
+      "y": 1
+    },
+    {
+      "id": 24,
+      "x": 4,
+      "y": 1
+    },
+    {
+      "id": 25,
+      "x": 5,
+      "y": 1
+    },
+    {
+      "id": 26,
+      "x": 2,
+      "y": 0
+    },
+    {
+      "id": 27,
+      "x": 3,
+      "y": 0
+    }
+  ],
+  "edges": [
+    {
+      "from": 0,
+      "dir": "EAST",
+      "type": "OPEN"
+    },
+    {
+      "from": 2,
+      "dir": "EAST",
+      "type": "OPEN"
+    },
+    {
+      "from": 3,
+      "dir": "NORTH",
+      "type": "DOOR"
+    },
+    {
+      "from": 4,
+      "dir": "EAST",
+      "type": "OPEN"
+    },
+    {
+      "from": 4,
+      "dir": "NORTH",
+      "type": "DOOR"
+    },
+    {
+      "from": 6,
+      "dir": "EAST",
+      "type": "OPEN"
+    },
+    {
+      "from": 6,
+      "dir": "NORTH",
+      "type": "OPEN"
+    },
+    {
+      "from": 7,
+      "dir": "EAST",
+      "type": "WALL"
+    },
+    {
+      "from": 7,
+      "dir": "NORTH",
+      "type": "OPEN"
+    },
+    {
+      "from": 8,
+      "dir": "EAST",
+      "type": "OPEN"
+    },
+    {
+      "from": 8,
+      "dir": "NORTH",
+      "type": "OPEN"
+    },
+    {
+      "from": 9,
+      "dir": "NORTH",
+      "type": "OPEN"
+    },
+    {
+      "from": 10,
+      "dir": "EAST",
+      "type": "OPEN"
+    },
+    {
+      "from": 10,
+      "dir": "NORTH",
+      "type": "WALL"
+    },
+    {
+      "from": 11,
+      "dir": "NORTH",
+      "type": "DOOR"
+    },
+    {
+      "from": 12,
+      "dir": "EAST",
+      "type": "OPEN"
+    },
+    {
+      "from": 12,
+      "dir": "NORTH",
+      "type": "DOOR"
+    },
+    {
+      "from": 14,
+      "dir": "EAST",
+      "type": "DOOR"
+    },
+    {
+      "from": 15,
+      "dir": "EAST",
+      "type": "OPEN"
+    },
+    {
+      "from": 15,
+      "dir": "NORTH",
+      "type": "OPEN"
+    },
+    {
+      "from": 16,
+      "dir": "NORTH",
+      "type": "OPEN"
+    },
+    {
+      "from": 17,
+      "dir": "EAST",
+      "type": "OPEN"
+    },
+    {
+      "from": 17,
+      "dir": "NORTH",
+      "type": "OPEN"
+    },
+    {
+      "from": 18,
+      "dir": "EAST",
+      "type": "DOOR"
+    },
+    {
+      "from": 18,
+      "dir": "NORTH",
+      "type": "OPEN"
+    },
+    {
+      "from": 20,
+      "dir": "EAST",
+      "type": "DOOR"
+    },
+    {
+      "from": 20,
+      "dir": "NORTH",
+      "type": "OPEN"
+    },
+    {
+      "from": 21,
+      "dir": "EAST",
+      "type": "OPEN"
+    },
+    {
+      "from": 22,
+      "dir": "EAST",
+      "type": "OPEN"
+    },
+    {
+      "from": 23,
+      "dir": "EAST",
+      "type": "OPEN"
+    },
+    {
+      "from": 24,
+      "dir": "EAST",
+      "type": "DOOR"
+    },
+    {
+      "from": 25,
+      "dir": "NORTH",
+      "type": "OPEN"
+    },
+    {
+      "from": 26,
+      "dir": "EAST",
+      "type": "OPEN"
+    },
+    {
+      "from": 26,
+      "dir": "NORTH",
+      "type": "DOOR"
+    },
+    {
+      "from": 27,
+      "dir": "NORTH",
+      "type": "DOOR"
+    }
+  ],
+  "crew" : [
+    {"name": "Durthu", "node": 0},
+    {"name": "Daith", "node": 1}
+  ],
+  "systems": [
+    { "type": "helm",    "x": 2, "y": 6, "w": 2, "h": 1 },
+    { "type": "engine",  "x": 1, "y": 4, "w": 2, "h": 2 },
+    { "type": "battery", "x": 1, "y": 2, "w": 1, "h": 2 },
+    { "type": "gasstorage", "x": 4, "y": 2, "w": 1, "h": 2,
+      "temperature": 293.15,
+      "store":   { "PHLOGISTON": 20000 }
+    },
+    { "type": "gasstorage", "x": 3, "y": 2, "w": 1, "h": 2,
+    "temperature": 293.15,
+    "store":   {"AIR": 20000 }
+    },
+    { "type": "gasstorage", "x": 0, "y": 1, "w": 1, "h": 2,
+      "temperature": 293.15,
+      "store":   {"CO2": 0 }
+    },
+    { "type": "atmospherics", "x": 5, "y": 1, "w": 1, "h": 2}
+  ],
+  "atmosphere": { "temperature": 293.15, "air": 104.5 }
+}

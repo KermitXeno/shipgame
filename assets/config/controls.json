@@ -1,0 +1,12 @@
+{
+  "buttons": {
+    "SELECT": "LEFT",
+    "COMMAND": "RIGHT",
+    "CAMERA_DRAG": "MIDDLE"
+  },
+  "modifiers": {
+    "ADD_TO_SELECTION": "Shift Left"
+  },
+  "keys": {
+  }
+}
