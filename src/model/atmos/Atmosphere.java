@@ -208,9 +208,8 @@ public class Atmosphere {
             if (gas.moles(Gas.AIR) <= 0) {
                 continue; // nothing to breathe
             }
-            double t = gas.temperature();
-            gas.removeGas(Gas.AIR, AIR_PER_CREW * dt);
-            gas.addGas(Gas.CO2, CO2_PER_CREW * dt, t);
+            gas.addMolesRaw(Gas.AIR, -AIR_PER_CREW * dt);
+            gas.addMolesRaw(Gas.CO2, CO2_PER_CREW * dt); // convert moles only; no spurious heat from the differing specific heats
         }
     }
 

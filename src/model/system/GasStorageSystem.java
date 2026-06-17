@@ -13,8 +13,9 @@ import model.atmos.Room;
 public class GasStorageSystem extends ShipSystem {
     private static final int MAX_PER_SHIP = 8;
     private static final double TANK_VOLUME_PER_TILE = 0.5;
-    private static final double CONDITION_RATE_PER_TILE = 12000;
-    private static final double POWER_PER_JOULE_M3 = 0.0006;
+    private static final double CONDITION_CONDUCTANCE_PER_TILE = 0.12; // heat-exchange rate: per-second fraction of the gap closed, per tile (the J/s moved scales with the gas present)
+    private static final double POWER_PER_JOULE = 0.0006; // power units per Joule of work done (independent of tank size)
+    private static final double COOLING_BASELINE_WORK = 0.3; // work per Joule moved for active cooling even downhill; the Carnot lift is added on top when pumping below the room
     private static final double ACCEPT_PRESSURE_FRACTION = 0.90;
     private static final Dimension MIN = new Dimension(1, 1);
     private static final Dimension MAX = new Dimension(2, 2);
@@ -22,7 +23,7 @@ public class GasStorageSystem extends ShipSystem {
     private final GasMixture tank = new GasMixture();
     private Gas storedGas = Gas.AIR;
     private double targetTemperature = AMBIENT_TEMPERATURE;
-    private double heatTolerance = 800;
+    private double heatTolerance = 400;
     private double pressureTolerance = 50000;
     private double powerRate;
 
@@ -134,19 +135,30 @@ public class GasStorageSystem extends ShipSystem {
             powerRate = 0;
             return;
         }
-        double deltaEnergy = targetTemperature * cap - tank.thermalEnergy();
-        double want = clamp(deltaEnergy, -tileCount() * CONDITION_RATE_PER_TILE * dt, tileCount() * CONDITION_RATE_PER_TILE * dt);
+        double deltaEnergy = targetTemperature * cap - tank.thermalEnergy(); // J to reach target; magnitude scales with the gas present (cap = moles * specific heat)
+        double want = deltaEnergy * Math.min(1.0, CONDITION_CONDUCTANCE_PER_TILE * tileCount() * dt); // Newtonian: rate set by conductance, throughput by how much gas is there
         if (Math.abs(want) < 1e-6) {
             powerRate = 0;
             return;
         }
-        int cost = (int) Math.round(Math.abs(want) * POWER_PER_JOULE_M3 * tankVolume());
+        double work; // electrical work this step
+        double reject = 0; // heat dumped to the room (cooling only)
+        if (want >= 0) {
+            work = want; // resistive heating: 1 J of work becomes 1 J of heat in the gas
+        } else {
+            double qc = -want; // heat pulled out of the tank gas
+            double tCold = tank.temperature();
+            double tHot = room.gas().heatCapacity() > 1e-6 ? room.temperature() : tCold; // rejection sink is the room
+            double lift = tCold > 1 ? Math.max(0, tHot - tCold) / tCold : 0; // ideal heat-pump work per Joule, only when pumping uphill
+            work = qc * (COOLING_BASELINE_WORK + lift); // active-cooling baseline plus the Carnot penalty for sub-room temperatures
+            reject = qc + work; // the hot side receives the pumped heat plus all the work
+        }
+        int cost = (int) Math.round(work * POWER_PER_JOULE);
         int paid = ship() != null ? ship().drawEnergy(cost) : 0;
         double fraction = cost > 0 ? (double) paid / cost : 1.0;
-        double applied = want * fraction;
-        tank.addHeat(applied);
-        if (applied < 0 && room.gas().heatCapacity() > 1e-6) {
-            room.gas().addHeat(-applied); // cooling the tank pumps the removed heat into the room
+        tank.addHeat(want * fraction);
+        if (want < 0 && room.gas().heatCapacity() > 1e-6) {
+            room.gas().addHeat(reject * fraction); // cooling rejects the heat and the work into the room
         }
         powerRate = dt > 0 ? -paid / dt : 0;
     }

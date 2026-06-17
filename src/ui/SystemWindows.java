@@ -507,6 +507,8 @@ public class SystemWindows implements Disposable {
                 () -> scaleMix(mix, -25), () -> scaleMix(mix, 25)));
         rows.add(Row.mix(mix));
         appendMixEditor(rows, w, mix);
+        rows.add(Row.adjust("Pump", e.isPumpEnabled() ? "On" : "Off",
+                e::togglePump, e::togglePump));
         rows.add(Row.adjust("Exhaust", e.isVentToSpace() ? "Space" : "Tank",
                 e::toggleVentToSpace, e::toggleVentToSpace));
         rows.add(Row.text(String.format("Chamber  %.0fK  %.0fkPa", e.chamber().temperature(), e.chamberPressure())));
@@ -526,6 +528,10 @@ public class SystemWindows implements Disposable {
                 () -> scaleMix(mix, -5), () -> scaleMix(mix, 5)));
         rows.add(Row.mix(mix));
         appendMixEditor(rows, w, mix);
+        rows.add(Row.adjust("Scrub", a.isScrubEnabled() ? "On" : "Off",
+                a::toggleScrub, a::toggleScrub));
+        rows.add(Row.adjust("Pump", a.isPumpEnabled() ? "On" : "Off",
+                a::togglePump, a::togglePump));
         rows.add(Row.text(String.format("Power  %+d / s", a.generationPerTick())));
         return rows;
     }

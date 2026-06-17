@@ -12,7 +12,7 @@ public final class Reactions {
     public static final List<Reaction> ALL = new ArrayList<>();
 
     private static final double IGNITION = 300;     // K, below which the reaction is dormant
-    private static final double RATE = 0.04;         // mass-action rate constant (a property of the reaction)
+    private static final double RATE = 0.009;         // mass-action rate constant (a property of the reaction)
     private static final double ACCEL = 0.0;         // temperature sensitivity of the rate constant (per K above ignition)
     private static final double ENERGY = 300000;    // J released per extent (exothermic)
 
@@ -62,15 +62,15 @@ public final class Reactions {
             }
             for (Gas g : Gas.values()) {
                 if (reaction.reactant(g) > 0) {
-                    gas.removeGas(g, extent * reaction.reactant(g));
+                    gas.addMolesRaw(g, -extent * reaction.reactant(g)); // moles only -- the atoms' sensible heat stays in the mixture
                 }
             }
             for (Gas g : Gas.values()) {
                 if (reaction.product(g) > 0) {
-                    gas.addGas(g, extent * reaction.product(g), t);
+                    gas.addMolesRaw(g, extent * reaction.product(g)); // moles only; the new gas shares the mixture temperature
                 }
             }
-            gas.addHeat(extent * reaction.energyPerExtent);
+            gas.addHeat(extent * reaction.energyPerExtent); // only the released bond energy enters as heat
         }
     }
 }

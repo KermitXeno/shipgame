@@ -24,7 +24,7 @@ public class EngineSystem extends ShipSystem {
     private static final double PILOT_HEAT_PER_TILE = 4000;          // J/s free bootstrap heat (ignition glow)
     private static final double INTAKE_CONDUCTANCE_PER_TILE = 1.5;     // intake valve size: fraction of the partial-pressure deficit admitted per second, per tile
     private static final double VENT_CONDUCTANCE_PER_TILE = 3;       // exhaust valve size: fraction of the partial-pressure excess vented per second, per tile
-    private static final double COOLING_CONDUCTANCE_PER_TILE = 200; // J/s per K of temperature gap, per tile
+    private static final double COOLING_CONDUCTANCE_PER_MOLE = 16; // J/s per K of temperature gap, per mole of chamber gas
     private static final double COOLING_FLOOR = 600;                 // below this the heat exchanger can't draw work (lets a cold reaction establish)
     private static final double GENERATOR_GAIN = 0.00087;             // power units per Joule cooled (before Carnot)
     private static final double WASTE_HEAT_TO_ROOM = 0.05;            // fraction of rejected heat that leaks into the engine's room
@@ -39,6 +39,7 @@ public class EngineSystem extends ShipSystem {
     private double heatThreshold = 2200;       // rated chamber K above which waste heat enters the room
     private double pressureThreshold = 4000;   // rated kPa above which the chamber blows out
     private boolean ventToSpace = false;       // false: exhaust spent gas into the matching tank; true: dump to space
+    private boolean pumpEnabled = true;        // false: stop drawing fuel so the chamber burns out (emergency shutoff)
     private double powerRate;                  // power units/sec generated, for the UI/helm
     private double powerAccumulator;
 
@@ -78,6 +79,7 @@ public class EngineSystem extends ShipSystem {
         heatThreshold = entry.getFloat("heatThreshold", (float) heatThreshold);
         pressureThreshold = entry.getFloat("pressureThreshold", (float) pressureThreshold);
         ventToSpace = entry.getBoolean("ventToSpace", ventToSpace);
+        pumpEnabled = entry.getBoolean("pumpEnabled", pumpEnabled);
         JsonValue mix = entry.get("mix"); // values are target partial pressures (kPa)
         if (mix != null) {
             for (JsonValue child = mix.child; child != null; child = child.next) {
@@ -156,6 +158,14 @@ public class EngineSystem extends ShipSystem {
         ventToSpace = !ventToSpace;
     }
 
+    public boolean isPumpEnabled() {
+        return pumpEnabled;
+    }
+
+    public void togglePump() {
+        pumpEnabled = !pumpEnabled;
+    }
+
     /** Fuel moles for a gas to reach its target partial pressure at the chamber's actual temperature (true pressure regulation). */
     private double targetMoles(Gas gas) {
         double t = Math.max(chamber.temperature(), AMBIENT_TEMPERATURE);
@@ -164,8 +174,10 @@ public class EngineSystem extends ShipSystem {
 
     /** One simulation step: intake, react, exhaust spent gas, cool for power, leak/blow out. */
     public void operate(Room room, float dt) {
-        intakeFromTanks(dt);
-        chamber.addHeat(tileCount() * PILOT_HEAT_PER_TILE * dt); // free pilot for bootstrap ignition
+        if (pumpEnabled) {
+            intakeFromTanks(dt); // off: no new fuel, so the existing charge reacts and burns out
+            chamber.addHeat(tileCount() * PILOT_HEAT_PER_TILE * dt); // pilot off too, so the chamber cools fully
+        }
         Reactions.react(chamber, chamberVolume(), dt);
         coolForPower(room, dt);
         exhaust(room, dt);
@@ -240,7 +252,7 @@ public class EngineSystem extends ShipSystem {
             powerRate = 0;
             return;
         }
-        double pull = COOLING_CONDUCTANCE_PER_TILE * tileCount() * (t - coldSinkTemperature) * dt;
+        double pull = COOLING_CONDUCTANCE_PER_MOLE * chamber.totalMoles() * (t - coldSinkTemperature) * dt; // heat exchange scales with the gas present, not just chamber size
         pull = Math.min(pull, (t - coldSinkTemperature) * cap); // never cool below the cold sink
         chamber.addHeat(-pull);
         double efficiency = Math.min(MAX_EFFICIENCY, 1.0 - coldSinkTemperature / t);
