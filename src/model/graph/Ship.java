@@ -18,6 +18,8 @@ import java.util.Set;
 public class Ship {
     // seconds between discrete energy ticks (crew movement stays per-frame)
     private static final float TICK_INTERVAL = 1f;
+    // global sim-time multiplier: <1 slows the whole game so power swings are readable and recoverable
+    private static final float SIM_SPEED = 0.5f;
 
     private final List<Node> nodes = new ArrayList<>();
     private final List<Crew> crew = new ArrayList<>();
@@ -110,6 +112,30 @@ public class Ship {
         return generation;
     }
 
+    /** Total power being generated this second (base plus any system producing). */
+    public int getGeneratedPerSecond() {
+        int g = baseGeneration;
+        for (ShipSystem system : systems) {
+            int p = system.generationPerTick();
+            if (p > 0) {
+                g += p;
+            }
+        }
+        return g;
+    }
+
+    /** Total power being consumed this second (systems with a negative rate), as a positive number. */
+    public int getConsumedPerSecond() {
+        int c = 0;
+        for (ShipSystem system : systems) {
+            int p = system.generationPerTick();
+            if (p < 0) {
+                c -= p;
+            }
+        }
+        return c;
+    }
+
     /** Total storable energy: base plus every battery's capacity. */
     public int getMaxStorage() {
         int max = baseStorageCapacity;
@@ -139,6 +165,7 @@ public class Ship {
     }
 
     public void tick(float delta) {
+        delta *= SIM_SPEED; // stretch sim time so the game doesn't feel frantic
         for (Crew member : crew) {
             member.tick(delta);
         }

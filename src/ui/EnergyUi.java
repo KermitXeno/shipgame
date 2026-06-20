@@ -51,8 +51,10 @@ public class EnergyUi implements Disposable {
 
         font.setColor(0.85f, 0.92f, 1f, 1f);
         font.draw(batch, "ENERGY  " + stored + " / " + max, x, y + BAR_HEIGHT + 18f);
-        int produced = ship.getProducedPerTick();
-        font.draw(batch, "POWER  " + (produced >= 0 ? "+" : "") + produced + " / tick", x, y - 8f);
+        int gen = ship.getGeneratedPerSecond();
+        int use = ship.getConsumedPerSecond();
+        int net = gen - use;
+        font.draw(batch, "NET POWER: " + net + "/s", x, y - 8f);
         font.setColor(Color.WHITE);
         batch.end();
     }

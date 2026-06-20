@@ -57,6 +57,12 @@ public class Crew {
         return targetNode != null;
     }
 
+    /** The final destination while pathing (last node of the route), or null when idle/arrived. */
+    public Node getGoal() {
+        Node last = path.peekLast();
+        return last != null ? last : targetNode;
+    }
+
     public void setDestination(Node goal) {
         Node from = targetNode != null ? targetNode : currentNode;
         List<Node> result = Pathfinder.findPath(from, goal);

@@ -509,6 +509,8 @@ public class SystemWindows implements Disposable {
         appendMixEditor(rows, w, mix);
         rows.add(Row.adjust("Pump", e.isPumpEnabled() ? "On" : "Off",
                 e::togglePump, e::togglePump));
+        rows.add(Row.adjust("Ignition", e.isIgnitionEnabled() ? "On" : "Off",
+                e::toggleIgnition, e::toggleIgnition));
         rows.add(Row.adjust("Exhaust", e.isVentToSpace() ? "Space" : "Tank",
                 e::toggleVentToSpace, e::toggleVentToSpace));
         rows.add(Row.text(String.format("Chamber  %.0fK  %.0fkPa", e.chamber().temperature(), e.chamberPressure())));

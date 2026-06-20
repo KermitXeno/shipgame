@@ -29,6 +29,32 @@ public final class Reactions {
     }
 
     /**
+     * True if some reaction has all its reactants present but the gas is still below that reaction's
+     * ignition temperature — i.e. an igniter would actually start something. False on a hot chamber
+     * (the reaction self-sustains) or an empty/inert one (nothing to light), so an igniter gated on
+     * this adds no free heat once running or when there is no fuel.
+     */
+    public static boolean needsIgnition(GasMixture gas) {
+        double t = gas.temperature();
+        for (Reaction reaction : ALL) {
+            if (t >= reaction.ignitionTemperature) {
+                continue;
+            }
+            boolean hasFuel = true;
+            for (Gas g : Gas.values()) {
+                if (reaction.reactant(g) > 0 && gas.moles(g) <= 1e-9) {
+                    hasFuel = false;
+                    break;
+                }
+            }
+            if (hasFuel) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Runs every reaction once over {@code dt} in a gas of the given {@code volume} (m^3).
      * Rate follows mass action: it is proportional to the product of reactant concentrations
      * (moles / volume), so a denser, higher-pressure mixture reacts faster and a thin one barely

@@ -47,9 +47,18 @@ public abstract class ShipSystem {
     public void tick() {
     }
 
-    /** Passive power per tick (0 unless overridden, e.g. by the engine). */
+    private static final double POWER_SMOOTH_TAU = 0.5; // seconds; smooths the displayed power so it doesn't flicker
+    private double displayPower; // smoothed per-second power for the UI (sign: + generated, - consumed)
+
+    /** Smooth the instantaneous per-second rate toward a stable display value. Call once per sim step. */
+    protected void smoothPower(double instantPerSecond, float dt) {
+        double a = dt > 0 ? Math.min(1.0, dt / POWER_SMOOTH_TAU) : 1.0;
+        displayPower += (instantPerSecond - displayPower) * a;
+    }
+
+    /** Smoothed per-second power for display (0 unless the system smooths a rate). */
     public int generationPerTick() {
-        return 0;
+        return (int) Math.round(displayPower);
     }
 
     /** Passive storage capacity (0 unless overridden, e.g. by the battery). */

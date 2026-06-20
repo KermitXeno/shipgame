@@ -104,11 +104,6 @@ public class GasStorageSystem extends ShipSystem {
         return powerRate;
     }
 
-    @Override
-    public int generationPerTick() {
-        return (int) Math.round(powerRate);
-    }
-
     public double accept(Gas gas, double moles, double temperature) {
         if (gas != storedGas || moles <= 0) {
             return 0;
@@ -133,12 +128,14 @@ public class GasStorageSystem extends ShipSystem {
         double cap = tank.heatCapacity();
         if (cap < 1e-6) {
             powerRate = 0;
+            smoothPower(0, dt);
             return;
         }
         double deltaEnergy = targetTemperature * cap - tank.thermalEnergy(); // J to reach target; magnitude scales with the gas present (cap = moles * specific heat)
         double want = deltaEnergy * Math.min(1.0, CONDITION_CONDUCTANCE_PER_TILE * tileCount() * dt); // Newtonian: rate set by conductance, throughput by how much gas is there
         if (Math.abs(want) < 1e-6) {
             powerRate = 0;
+            smoothPower(0, dt);
             return;
         }
         double work; // electrical work this step
@@ -161,6 +158,7 @@ public class GasStorageSystem extends ShipSystem {
             room.gas().addHeat(reject * fraction); // cooling rejects the heat and the work into the room
         }
         powerRate = dt > 0 ? -paid / dt : 0;
+        smoothPower(powerRate, dt);
     }
 
     private void rupture(Room room) {

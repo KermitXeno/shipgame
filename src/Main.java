@@ -1,8 +1,8 @@
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
@@ -20,11 +20,13 @@ import model.io.ShipLoader;
 import render.AtmosphereRenderer;
 import render.CrewRenderer;
 import render.OrbitCameraController;
+import render.RetroRenderer;
 import render.ShipRenderer;
 import render.SystemRenderer;
 import ui.AtmosphereUi;
 import ui.CrewListUi;
 import ui.EnergyUi;
+import ui.PauseOverlay;
 import ui.SystemWindows;
 
 /**
@@ -48,6 +50,9 @@ public class Main extends ApplicationAdapter {
     private EnergyUi energyUi;
     private AtmosphereUi atmosphereUi;
     private SystemWindows systemWindows;
+    private PauseOverlay pauseOverlay;
+    private RetroRenderer retro;
+    private boolean paused;
     private Controls controls;
 
     @Override
@@ -62,6 +67,8 @@ public class Main extends ApplicationAdapter {
         energyUi = new EnergyUi(ship);
         atmosphereUi = new AtmosphereUi(ship, selection);
         systemWindows = new SystemWindows(ship);
+        pauseOverlay = new PauseOverlay();
+        retro = new RetroRenderer(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         camera = new PerspectiveCamera(60f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.near = 0.1f;
@@ -88,12 +95,16 @@ public class Main extends ApplicationAdapter {
 
     @Override
     public void render() {
-        ship.tick(Gdx.graphics.getDeltaTime());
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+            paused = !paused; // orders can still be issued while paused; they run once the tick resumes
+        }
+        if (!paused) {
+            ship.tick(Gdx.graphics.getDeltaTime());
+        }
 
         atmosphereRenderer.updateLights(); // set gas lights before the hull is lit
 
-        Gdx.gl.glClearColor(0.07f, 0.08f, 0.10f, 1f);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+        retro.begin(); // everything between begin/end is drawn low-res, then upscaled with no smoothing
 
         modelBatch.begin(camera);
         shipRenderer.render(modelBatch, environment);
@@ -109,12 +120,17 @@ public class Main extends ApplicationAdapter {
         atmosphereRenderer.renderGas(modelBatch, environment);
         modelBatch.end();
 
-        systemRenderer.renderLabels(camera, ship);
+        retro.end(); // blit the low-res scene up to the window
+
+        systemRenderer.renderLabels(camera, ship); // labels and UI stay full-res so they read clearly
 
         ui.render(controls.getSelectionBox());
         energyUi.render();
         atmosphereUi.render();
         systemWindows.render();
+        if (paused) {
+            pauseOverlay.render();
+        }
     }
 
     @Override
@@ -122,10 +138,12 @@ public class Main extends ApplicationAdapter {
         camera.viewportWidth = width;
         camera.viewportHeight = height;
         camera.update();
+        retro.resize(width, height);
         ui.resize(width, height);
         energyUi.resize(width, height);
         atmosphereUi.resize(width, height);
         systemWindows.resize(width, height);
+        pauseOverlay.resize(width, height);
     }
 
     @Override
@@ -140,6 +158,8 @@ public class Main extends ApplicationAdapter {
         energyUi.dispose();
         atmosphereUi.dispose();
         systemWindows.dispose();
+        pauseOverlay.dispose();
+        retro.dispose();
     }
 
     public static void main(String[] args) {

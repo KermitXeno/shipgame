@@ -21,7 +21,7 @@ import model.atmos.Room;
 public class EngineSystem extends ShipSystem {
     private static final int MAX_PER_SHIP = 8;
     private static final double CHAMBER_VOLUME_PER_TILE = 0.5;        // m^3 (small -> pressure builds)
-    private static final double PILOT_HEAT_PER_TILE = 4000;          // J/s free bootstrap heat (ignition glow)
+    private static final double PILOT_HEAT_PER_TILE = 4000;          // J/s igniter heat, only while lighting a cold charge (not free once running)
     private static final double INTAKE_CONDUCTANCE_PER_TILE = 1.5;     // intake valve size: fraction of the partial-pressure deficit admitted per second, per tile
     private static final double VENT_CONDUCTANCE_PER_TILE = 3;       // exhaust valve size: fraction of the partial-pressure excess vented per second, per tile
     private static final double COOLING_CONDUCTANCE_PER_MOLE = 16; // J/s per K of temperature gap, per mole of chamber gas
@@ -40,6 +40,7 @@ public class EngineSystem extends ShipSystem {
     private double pressureThreshold = 4000;   // rated kPa above which the chamber blows out
     private boolean ventToSpace = false;       // false: exhaust spent gas into the matching tank; true: dump to space
     private boolean pumpEnabled = true;        // false: stop drawing fuel so the chamber burns out (emergency shutoff)
+    private boolean ignitionEnabled = true;    // false: igniter off, so fuel can accumulate cold and the reaction is delayed
     private double powerRate;                  // power units/sec generated, for the UI/helm
     private double powerAccumulator;
 
@@ -80,6 +81,7 @@ public class EngineSystem extends ShipSystem {
         pressureThreshold = entry.getFloat("pressureThreshold", (float) pressureThreshold);
         ventToSpace = entry.getBoolean("ventToSpace", ventToSpace);
         pumpEnabled = entry.getBoolean("pumpEnabled", pumpEnabled);
+        ignitionEnabled = entry.getBoolean("ignitionEnabled", ignitionEnabled);
         JsonValue mix = entry.get("mix"); // values are target partial pressures (kPa)
         if (mix != null) {
             for (JsonValue child = mix.child; child != null; child = child.next) {
@@ -97,11 +99,6 @@ public class EngineSystem extends ShipSystem {
         } catch (IllegalArgumentException e) {
             return null;
         }
-    }
-
-    @Override
-    public int generationPerTick() {
-        return (int) Math.round(powerRate);
     }
 
     public double getPowerRate() {
@@ -166,6 +163,14 @@ public class EngineSystem extends ShipSystem {
         pumpEnabled = !pumpEnabled;
     }
 
+    public boolean isIgnitionEnabled() {
+        return ignitionEnabled;
+    }
+
+    public void toggleIgnition() {
+        ignitionEnabled = !ignitionEnabled;
+    }
+
     /** Fuel moles for a gas to reach its target partial pressure at the chamber's actual temperature (true pressure regulation). */
     private double targetMoles(Gas gas) {
         double t = Math.max(chamber.temperature(), AMBIENT_TEMPERATURE);
@@ -176,7 +181,9 @@ public class EngineSystem extends ShipSystem {
     public void operate(Room room, float dt) {
         if (pumpEnabled) {
             intakeFromTanks(dt); // off: no new fuel, so the existing charge reacts and burns out
-            chamber.addHeat(tileCount() * PILOT_HEAT_PER_TILE * dt); // pilot off too, so the chamber cools fully
+        }
+        if (ignitionEnabled && Reactions.needsIgnition(chamber)) {
+            chamber.addHeat(tileCount() * PILOT_HEAT_PER_TILE * dt); // igniter only sparks a cold charge that has fuel; off once lit or when empty
         }
         Reactions.react(chamber, chamberVolume(), dt);
         coolForPower(room, dt);
@@ -250,6 +257,7 @@ public class EngineSystem extends ShipSystem {
         double cap = chamber.heatCapacity();
         if (cap < 1e-6 || t <= COOLING_FLOOR) {
             powerRate = 0;
+            smoothPower(0, dt);
             return;
         }
         double pull = COOLING_CONDUCTANCE_PER_MOLE * chamber.totalMoles() * (t - coldSinkTemperature) * dt; // heat exchange scales with the gas present, not just chamber size
@@ -268,6 +276,7 @@ public class EngineSystem extends ShipSystem {
             powerAccumulator -= whole;
         }
         powerRate = dt > 0 ? power / dt : 0;
+        smoothPower(powerRate, dt);
     }
 
     /** Only an over-rated-heat chamber warms the room; below that the chamber is insulated. */

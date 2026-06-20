@@ -19,14 +19,16 @@ public class AtmosphericsSystem extends ShipSystem {
     private static final double DEFAULT_TARGET_TEMPERATURE = 293.15;
     private static final double DEFAULT_AIR_PRESSURE = 101.0;
     private static final double THERMAL_CONDUCTANCE_PER_TILE = 0.15; // heat-exchange rate: per-second fraction of the gap closed, per room tile
-    private static final double SUPPLY_RATE = 30;
-    private static final double POWER_PER_MOLE = 0.05;
-    private static final double POWER_PER_JOULE_M3 = 0.008;  // power per Joule of heat moved (size-independent)
+    private static final double SUPPLY_CONDUCTANCE_PER_TILE = 0.25; // gas-move rate: per-second fraction of the off-target amount moved, per tile (throughput scales with the deficit)
+    private static final double POWER_PER_MOLE = 0.05; // work per mole of gas pumped in or scrubbed out
+    private static final double POWER_PER_JOULE = 0.0006; // work per Joule of heat moved (matches the tank heat pump)
+    private static final double COOLING_BASELINE_WORK = 0.3; // work per Joule to actively cool a room toward target (rejected to space; matches the tank)
 
     private double targetTemperature = DEFAULT_TARGET_TEMPERATURE;
     private final double[] targetPressure = new double[Gas.values().length];
-    private boolean scrubEnabled = true; // remove gas above its target (vent/route to tanks)
-    private boolean pumpEnabled = true;  // add gas below its target (supply from reserves)
+    private boolean scrubEnabled = true; // remove gas not at/under its target (vent/route to tanks)
+    private boolean pumpEnabled = true;  // add gas below its target AND heat/cool the room toward target
+    private double drawAccumulator;      // carries sub-unit energy cost across ticks so small loads aren't rounded up or lost
     private double powerRate;
 
     public AtmosphericsSystem() {
@@ -56,11 +58,6 @@ public class AtmosphericsSystem extends ShipSystem {
     @Override
     public SystemDecal decal() {
         return SystemDecal.color("ATMOS", 0.40f, 0.85f, 0.85f);
-    }
-
-    @Override
-    public int generationPerTick() {
-        return (int) Math.round(powerRate);
     }
 
     public double getPowerRate() {
@@ -110,8 +107,7 @@ public class AtmosphericsSystem extends ShipSystem {
             GasMixture gas = room.gas();
             double volume = room.volume();
             for (Gas g : Gas.values()) {
-                double maxStep = SUPPLY_RATE * dt * room.tileCount();
-                double step = clamp(targetMoles(g, volume) - gas.moles(g), -maxStep, maxStep);
+                double step = (targetMoles(g, volume) - gas.moles(g)) * Math.min(1.0, SUPPLY_CONDUCTANCE_PER_TILE * room.tileCount() * dt); // throughput scales with how far off-target the room is
                 if (Math.abs(step) < 1e-9 || (step > 0 && !pumpEnabled) || (step < 0 && !scrubEnabled)) {
                     continue;
                 }
@@ -129,21 +125,26 @@ public class AtmosphericsSystem extends ShipSystem {
                 spent += drawn;
             }
             double cap = gas.heatCapacity();
-            if (cap > 1e-6) {
+            if (cap > 1e-6 && pumpEnabled) { // temperature regulation is part of pumping; scrub-only does no thermal work
                 double delta = (targetTemperature * cap - gas.thermalEnergy()) * Math.min(1.0, THERMAL_CONDUCTANCE_PER_TILE * room.tileCount() * dt); // rate by conductance, throughput by gas present
-                double cost = Math.abs(delta) * POWER_PER_JOULE_M3;
-                double fraction = cost > 0 ? Math.min(1, budget / cost) : 1;
-                gas.addHeat(delta * fraction);
-                double drawn = cost * fraction;
-                budget -= drawn;
-                spent += drawn;
+                if (Math.abs(delta) > 1e-9) {
+                    double work = delta >= 0 ? delta : -delta * COOLING_BASELINE_WORK; // heating is resistive (1 J work -> 1 J heat); cooling rejects downhill to space for the baseline work only
+                    double cost = work * POWER_PER_JOULE;
+                    double fraction = cost > 0 ? Math.min(1, budget / cost) : 1;
+                    gas.addHeat(delta * fraction);
+                    double drawn = cost * fraction;
+                    budget -= drawn;
+                    spent += drawn;
+                }
             }
         }
-        int cost = (int) Math.round(spent);
+        drawAccumulator += spent; // draw whole units, keep the fraction so tiny loads cost their true rate over time
+        int cost = (int) drawAccumulator;
         if (cost > 0 && ship() != null) {
-            ship().drawEnergy(cost);
+            drawAccumulator -= ship().drawEnergy(cost);
         }
-        powerRate = dt > 0 ? -cost / dt : 0;
+        powerRate = dt > 0 ? -spent / dt : 0; // true (fractional) consumption rate; the display smooths it
+        smoothPower(powerRate, dt);
     }
 
     private double routeToTank(Gas gas, double moles, double temperature) {
@@ -156,9 +157,5 @@ public class AtmosphericsSystem extends ShipSystem {
             }
         }
         return 0;
-    }
-
-    private static double clamp(double value, double lo, double hi) {
-        return value < lo ? lo : Math.min(value, hi);
     }
 }
