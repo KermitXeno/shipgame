@@ -1,6 +1,7 @@
 package model.graph;
 
 import model.atmos.Atmosphere;
+import model.combat.Armor;
 import model.crew.Crew;
 import model.system.ShipSystem;
 
@@ -20,6 +21,8 @@ public class Ship {
     private static final float TICK_INTERVAL = 1f;
     // global sim-time multiplier: <1 slows the whole game so power swings are readable and recoverable
     private static final float SIM_SPEED = 0.5f;
+    private static final double ARMOR_MASS_K = 0.4; // each armor point multiplies compartment mass by this
+    private static final double HULL_KJ_PER_KG = 1.0; // structural toughness: kJ of damage the bare hull absorbs per kg (1 unit = 1 kJ)
 
     private final List<Node> nodes = new ArrayList<>();
     private final List<Crew> crew = new ArrayList<>();
@@ -30,6 +33,8 @@ public class Ship {
     private int baseGeneration = 0;
     private int baseStorageCapacity = 0;
     private int storedEnergy;
+    private double armor;
+    private int hull = -1; // current integrity in energy units (kJ); -1 means full, resolved lazily against the live max
 
     private float tickTimer;
 
@@ -143,6 +148,92 @@ public class Ship {
             max += system.storageCapacity();
         }
         return max;
+    }
+
+    /** Bare compartment mass (kg), summed before any armor scaling. */
+    private double compartmentMass() {
+        double sum = 0;
+        for (Node node : nodes) {
+            sum += node.mass();
+        }
+        return sum;
+    }
+
+    /** Structural boundary mass (kg): every wall/door counted exactly once. */
+    private double boundaryMass() {
+        double sum = 0;
+        Set<Edge> counted = new HashSet<>();
+        for (Node node : nodes) {
+            for (Direction dir : Direction.values()) {
+                Edge edge = node.getEdge(dir);
+                if (edge != null && counted.add(edge)) {
+                    sum += edge.getType().mass();
+                }
+            }
+        }
+        return sum;
+    }
+
+    /** Combined mass (kg) of installed system machinery. */
+    private double equipmentMass() {
+        double sum = 0;
+        for (ShipSystem system : systems) {
+            sum += system.equipmentMass();
+        }
+        return sum;
+    }
+
+    /** Total ship mass (kg): armor-scaled compartments + boundaries (each once) + system machinery. */
+    public int getTotalMass() {
+        return (int) Math.round(compartmentMass() * (1 + ARMOR_MASS_K * armor) + boundaryMass() + equipmentMass());
+    }
+
+    /** Load-bearing hull mass (kg): compartments + boundaries, before armor and excluding machinery. */
+    public int getHullMass() {
+        return (int) Math.round(compartmentMass() + boundaryMass());
+    }
+
+    /** Maximum hull integrity in energy units (kJ): bare hull mass x toughness, independent of armor. */
+    public int getMaxHull() {
+        return (int) Math.round((compartmentMass() + boundaryMass()) * HULL_KJ_PER_KG);
+    }
+
+    /** Current hull integrity (kJ); a fresh ship starts full and is resolved live against the max. */
+    public int getHull() {
+        int max = getMaxHull();
+        if (hull < 0 || hull > max) {
+            return max;
+        }
+        return hull;
+    }
+
+    /** Takes a shot of {@code rawEnergy} (kJ): armor mitigates it, the remainder is subtracted from the hull. Returns kJ dealt. */
+    public int takeHit(double rawEnergy) {
+        int dealt = (int) Math.round(Armor.damage(rawEnergy, armor));
+        hull = Math.max(0, getHull() - dealt);
+        return dealt;
+    }
+
+    /** Restores up to {@code amount} kJ of integrity, clamped to the max; returns the amount actually repaired. */
+    public int repairHull(int amount) {
+        int current = getHull();
+        int next = Math.max(0, Math.min(current + Math.max(0, amount), getMaxHull()));
+        hull = next;
+        return next - current;
+    }
+
+    /** True once integrity reaches zero. */
+    public boolean isDestroyed() {
+        return getHull() <= 0;
+    }
+
+    /** Ship-wide armor rating, applied to compartment mass and used by combat damage. */
+    public double getArmor() {
+        return armor;
+    }
+
+    public void setArmor(double armor) {
+        this.armor = Math.max(0, armor);
     }
 
     public int getStoredEnergy() {

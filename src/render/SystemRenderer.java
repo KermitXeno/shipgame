@@ -37,7 +37,7 @@ public class SystemRenderer implements Disposable {
     private final Map<ShipSystem, Decal> decals = new HashMap<>();
 
     private final SpriteBatch labelBatch = new SpriteBatch();
-    private final BitmapFont labelFont = new BitmapFont();
+    private final BitmapFont labelFont = RetroFont.pixel();
     private final GlyphLayout layout = new GlyphLayout();
     private final Vector3 screen = new Vector3();
 

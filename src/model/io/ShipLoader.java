@@ -52,12 +52,16 @@ public final class ShipLoader {
         if (root.has("baseStorage")) {
             ship.setBaseStorageCapacity(root.getInt("baseStorage"));
         }
+        if (root.has("armor")) {
+            ship.setArmor(root.getFloat("armor"));
+        }
         loadSystems(ship, root.get("systems"));
         loadCrew(ship, root.get("crew"));
         loadAtmosphere(ship, root.get("atmosphere"));
         Gdx.app.log("ShipLoader", "=== loaded: systems=" + ship.getSystems().size()
                 + " produced/tick=" + ship.getProducedPerTick()
                 + " maxStorage=" + ship.getMaxStorage()
+                + " mass=" + ship.getTotalMass() + "kg"
                 + " rooms=" + ship.getAtmosphere().rooms().size() + " ===");
         return ship;
     }

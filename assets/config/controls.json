@@ -8,5 +8,6 @@
     "ADD_TO_SELECTION": "Shift Left"
   },
   "keys": {
+    "PAUSE": "Space"
   }
 }

@@ -24,11 +24,11 @@ public class EngineSystem extends ShipSystem {
     private static final double PILOT_HEAT_PER_TILE = 4000;          // J/s igniter heat, only while lighting a cold charge (not free once running)
     private static final double INTAKE_CONDUCTANCE_PER_TILE = 1.5;     // intake valve size: fraction of the partial-pressure deficit admitted per second, per tile
     private static final double VENT_CONDUCTANCE_PER_TILE = 3;       // exhaust valve size: fraction of the partial-pressure excess vented per second, per tile
-    private static final double COOLING_CONDUCTANCE_PER_MOLE = 16; // J/s per K of temperature gap, per mole of chamber gas
+    private static final double COOLING_CONDUCTANCE_PER_MOLE = 1600; // J/s per K of temperature gap, per mole of chamber gas (100x scale)
     private static final double COOLING_FLOOR = 600;                 // below this the heat exchanger can't draw work (lets a cold reaction establish)
-    private static final double GENERATOR_GAIN = 0.00087;             // power units per Joule cooled (before Carnot)
-    private static final double WASTE_HEAT_TO_ROOM = 0.05;            // fraction of rejected heat that leaks into the engine's room
-    private static final double CHAMBER_ROOM_CONDUCTIVITY = 2000;
+    private static final double GENERATOR_GAIN = 0.0006;             // power units per Joule cooled (before Carnot); 1 unit = 1 kJ
+    private static final double WASTE_HEAT_TO_ROOM = 0.0001;            // fraction of rejected heat that leaks into the engine's room (cut /100 vs 100x flux)
+    private static final double CHAMBER_ROOM_CONDUCTIVITY = 200000;
     private static final double MAX_EFFICIENCY = 0.95;
     private static final Dimension MIN = new Dimension(1, 2);
     private static final Dimension MAX = new Dimension(2, 2);
@@ -36,8 +36,8 @@ public class EngineSystem extends ShipSystem {
     private final GasMixture chamber = new GasMixture();
     private final double[] targetPressure = new double[Gas.values().length]; // desired partial pressure (kPa) -- the player's throttle
     private double coldSinkTemperature = 290;  // rated cooling: the cold side heat is rejected to, sets the efficiency ceiling
-    private double heatThreshold = 2200;       // rated chamber K above which waste heat enters the room
-    private double pressureThreshold = 4000;   // rated kPa above which the chamber blows out
+    private double heatThreshold = 7200;       // rated chamber K above which waste heat enters the room
+    private double pressureThreshold = 12000;   // rated kPa above which the chamber blows out
     private boolean ventToSpace = false;       // false: exhaust spent gas into the matching tank; true: dump to space
     private boolean pumpEnabled = true;        // false: stop drawing fuel so the chamber burns out (emergency shutoff)
     private boolean ignitionEnabled = true;    // false: igniter off, so fuel can accumulate cold and the reaction is delayed
@@ -72,6 +72,11 @@ public class EngineSystem extends ShipSystem {
     @Override
     public SystemDecal decal() {
         return SystemDecal.color("ENGINE", 0.95f, 0.55f, 0.25f);
+    }
+
+    @Override
+    public double equipmentMass() {
+        return 2000;
     }
 
     @Override

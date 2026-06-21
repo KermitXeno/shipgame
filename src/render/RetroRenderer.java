@@ -15,7 +15,7 @@ import com.badlogic.gdx.utils.Disposable;
  * {@link #begin()} and {@link #end()}; draw 2D UI afterwards so it stays crisp and readable.
  */
 public class RetroRenderer implements Disposable {
-    private static final int SCALE = 3; // window pixels per low-res pixel (higher = chunkier)
+    private static final int SCALE = 2; // window pixels per low-res pixel (higher = chunkier)
 
     private final SpriteBatch batch = new SpriteBatch();
     private FrameBuffer fbo;

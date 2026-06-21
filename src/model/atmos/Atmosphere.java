@@ -28,14 +28,14 @@ import java.util.Set;
  * Rooms and door links are derived once from the static graph.
  */
 public class Atmosphere {
-    private static final double SYSTEM_GAS_CONDUCTIVITY = 3000; // J/(K*s) between a system and its room
+    private static final double SYSTEM_GAS_CONDUCTIVITY = 300000; // J/(K*s) between a system and its room (100x scale)
     private static final double DOOR_FLOW_RATE = 2.5;          // fraction equalised per second through an open door
-    private static final double WALL_SEEP = 40;               // J/(K*s) of heat conducted through a shared wall
-    private static final double DOOR_SEEP = 150;              // J/(K*s) through a (closed) shared door
+    private static final double WALL_SEEP = 4000;             // J/(K*s) of heat conducted through a shared wall (100x scale)
+    private static final double DOOR_SEEP = 15000;            // J/(K*s) through a (closed) shared door (100x scale)
     private static final double AIR_PER_CREW = 0.0003;        // mol of air a crew member breathes per second
     private static final double CO2_PER_CREW = 0.00025;       // mol of CO2 a crew member exhales per second
     private static final double SPACE_TEMPERATURE = 3;        // K, the cold background the hull radiates heat to
-    private static final double HULL_LOSS_PER_TILE = 0.8;     // J/(K*s) each tile's hull loses to space
+    private static final double HULL_LOSS_PER_TILE = 80;     // J/(K*s) each tile's hull loses to space (100x scale)
 
     private final Ship ship;
     private final List<Room> rooms = new ArrayList<>();

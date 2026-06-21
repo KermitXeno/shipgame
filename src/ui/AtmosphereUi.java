@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import render.RetroFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.Disposable;
 import input.Selection;
@@ -20,11 +21,11 @@ import model.graph.Ship;
  * legend. Informational for now; the atmospherics target is settable via its API.
  */
 public class AtmosphereUi implements Disposable {
-    private static final float LEFT = 212f;
+    private static final float LEFT = 12f;
     private static final float BOTTOM = 12f;
 
     private final SpriteBatch batch = new SpriteBatch();
-    private final BitmapFont font = new BitmapFont();
+    private final BitmapFont font = RetroFont.pixel();
     private final Texture pixel;
     private final Ship ship;
     private final Selection selection;
@@ -54,7 +55,7 @@ public class AtmosphereUi implements Disposable {
 
         batch.begin();
         batch.setColor(0f, 0f, 0f, 0.5f);
-        batch.draw(pixel, x - 8f, BOTTOM - 6f, 360f, 76f);
+        batch.draw(pixel, x - 8f, BOTTOM - 12f, 420f, 76f);
         batch.setColor(Color.WHITE);
 
         font.setColor(Color.WHITE);
@@ -73,7 +74,7 @@ public class AtmosphereUi implements Disposable {
             batch.draw(pixel, gx, y - 9f, 11f, 11f);
             font.setColor(0.85f, 0.85f, 0.85f, 1f);
             font.draw(batch, String.format("%s %2.0f%%", g.label, pct), gx + 15f, y);
-            gx += 110f;
+            gx += 130f;
         }
         font.setColor(Color.WHITE);
         batch.end();

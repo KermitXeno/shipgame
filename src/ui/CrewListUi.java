@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import render.RetroFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Disposable;
@@ -19,7 +20,7 @@ public class CrewListUi implements Disposable {
     private static final float ROW_HEIGHT = 26f;
 
     private final SpriteBatch batch = new SpriteBatch();
-    private final BitmapFont font = new BitmapFont();
+    private final BitmapFont font = RetroFont.pixel();
     private final Texture pixel;
     private final Ship ship;
     private final Selection selection;
@@ -40,7 +41,7 @@ public class CrewListUi implements Disposable {
         float panelHeight = TOP + count * ROW_HEIGHT + 10f; // ends just below the last member
         batch.begin();
         batch.setColor(0f, 0f, 0f, 0.5f);
-        batch.draw(pixel, 0f, height - panelHeight, PANEL_WIDTH, panelHeight);
+        batch.draw(pixel, 4f, height - panelHeight, PANEL_WIDTH, panelHeight);
         batch.setColor(Color.WHITE);
         font.setColor(0.7f, 0.8f, 0.9f, 1f);
         font.draw(batch, "CREW", 12f, height - 8f);

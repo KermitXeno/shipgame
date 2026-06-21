@@ -14,7 +14,7 @@ public class GasStorageSystem extends ShipSystem {
     private static final int MAX_PER_SHIP = 8;
     private static final double TANK_VOLUME_PER_TILE = 0.5;
     private static final double CONDITION_CONDUCTANCE_PER_TILE = 0.12; // heat-exchange rate: per-second fraction of the gap closed, per tile (the J/s moved scales with the gas present)
-    private static final double POWER_PER_JOULE = 0.0006; // power units per Joule of work done (independent of tank size)
+    private static final double POWER_PER_JOULE = 0.00069; // power units per Joule of work done (1 kJ unit)
     private static final double COOLING_BASELINE_WORK = 0.3; // work per Joule moved for active cooling even downhill; the Carnot lift is added on top when pumping below the room
     private static final double ACCEPT_PRESSURE_FRACTION = 0.90;
     private static final Dimension MIN = new Dimension(1, 1);
@@ -50,6 +50,11 @@ public class GasStorageSystem extends ShipSystem {
     @Override
     public SystemDecal decal() {
         return SystemDecal.color("TANK", 0.90f, 0.80f, 0.35f);
+    }
+
+    @Override
+    public double equipmentMass() {
+        return 800;
     }
 
     @Override

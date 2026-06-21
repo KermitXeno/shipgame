@@ -19,6 +19,7 @@ public class Bindings {
         map.put(InputAction.COMMAND, Buttons.RIGHT);
         map.put(InputAction.CAMERA_DRAG, Buttons.MIDDLE);
         map.put(InputAction.ADD_TO_SELECTION, Keys.SHIFT_LEFT);
+        map.put(InputAction.PAUSE, Keys.SPACE);
     }
 
     public int code(InputAction action) {

@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import render.RetroFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.Disposable;
@@ -12,7 +13,7 @@ import com.badlogic.gdx.utils.Disposable;
 /** Drawn over everything while the game is paused: a faint grey screen filter and a PAUSED label. */
 public class PauseOverlay implements Disposable {
     private final SpriteBatch batch = new SpriteBatch();
-    private final BitmapFont font = new BitmapFont();
+    private final BitmapFont font = RetroFont.pixel();
     private final GlyphLayout layout = new GlyphLayout();
     private final Texture pixel;
 
@@ -31,7 +32,8 @@ public class PauseOverlay implements Disposable {
         batch.setColor(0.5f, 0.5f, 0.55f, 0.22f); // small grey filter over the whole screen
         batch.draw(pixel, 0f, 0f, width, height);
         batch.setColor(Color.WHITE);
-        font.getData().setScale(2f);
+        float base = font.getData().scaleX;
+        font.getData().setScale(base * 2f);
         layout.setText(font, "PAUSED");
         float x = (width - layout.width) / 2f;
         float y = height - 40f;
@@ -40,7 +42,7 @@ public class PauseOverlay implements Disposable {
         font.setColor(0.92f, 0.95f, 1f, 0.95f);
         font.draw(batch, "PAUSED", x, y);
         font.setColor(Color.WHITE);
-        font.getData().setScale(1f);
+        font.getData().setScale(base);
         batch.end();
     }
 

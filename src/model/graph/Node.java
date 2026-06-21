@@ -13,6 +13,8 @@ import java.util.Map;
  * belongs to (either may be null).
  */
 public class Node {
+    private static final double BASE_MASS = 800;   // kg of bare compartment
+
     private final int id;
     private final int x;
     private final int y;
@@ -79,5 +81,10 @@ public class Node {
     public Node neighbor(Direction dir) {
         Edge edge = edges.get(dir);
         return edge == null ? null : edge.other(this);
+    }
+
+    /** Bare compartment mass in kg (ship-level armor is applied by Ship). */
+    public double mass() {
+        return BASE_MASS;
     }
 }

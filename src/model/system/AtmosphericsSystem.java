@@ -20,8 +20,8 @@ public class AtmosphericsSystem extends ShipSystem {
     private static final double DEFAULT_AIR_PRESSURE = 101.0;
     private static final double THERMAL_CONDUCTANCE_PER_TILE = 0.15; // heat-exchange rate: per-second fraction of the gap closed, per room tile
     private static final double SUPPLY_CONDUCTANCE_PER_TILE = 0.25; // gas-move rate: per-second fraction of the off-target amount moved, per tile (throughput scales with the deficit)
-    private static final double POWER_PER_MOLE = 0.05; // work per mole of gas pumped in or scrubbed out
-    private static final double POWER_PER_JOULE = 0.0006; // work per Joule of heat moved (matches the tank heat pump)
+    private static final double POWER_PER_MOLE = 5; // work per mole of gas pumped in or scrubbed out (100x scale)
+    private static final double POWER_PER_JOULE = 0.00069; // work per Joule of heat moved (1 kJ unit; matches the tank heat pump)
     private static final double COOLING_BASELINE_WORK = 0.3; // work per Joule to actively cool a room toward target (rejected to space; matches the tank)
 
     private double targetTemperature = DEFAULT_TARGET_TEMPERATURE;
@@ -58,6 +58,11 @@ public class AtmosphericsSystem extends ShipSystem {
     @Override
     public SystemDecal decal() {
         return SystemDecal.color("ATMOS", 0.40f, 0.85f, 0.85f);
+    }
+
+    @Override
+    public double equipmentMass() {
+        return 600;
     }
 
     public double getPowerRate() {

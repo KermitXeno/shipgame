@@ -57,6 +57,10 @@ public class Controls extends InputAdapter {
     private int cameraLastX;
     private int cameraLastY;
 
+    private boolean paused;
+
+    public boolean isPaused() { return paused; }
+
     public Controls(PerspectiveCamera camera, OrbitCameraController orbit, Ship ship,
                     Selection selection, CrewListUi ui, Bindings bindings) {
         this.camera = camera;
@@ -86,6 +90,7 @@ public class Controls extends InputAdapter {
                 return true;
             }
         }
+        if (keycode == bindings.code(InputAction.PAUSE)) { paused = !paused; return true; }
         return false;
     }
 

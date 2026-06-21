@@ -12,9 +12,9 @@ public final class Reactions {
     public static final List<Reaction> ALL = new ArrayList<>();
 
     private static final double IGNITION = 300;     // K, below which the reaction is dormant
-    private static final double RATE = 0.009;         // mass-action rate constant (a property of the reaction)
+    private static final double RATE = 0.05;          // mass-action rate constant (a property of the reaction)
     private static final double ACCEL = 0.0;         // temperature sensitivity of the rate constant (per K above ignition)
-    private static final double ENERGY = 300000;    // J released per extent (exothermic)
+    private static final double ENERGY = 30000000;    // J released per extent (hyper-dense fuel, 100x scale)
 
     static {
         double[] reactants = new double[Gas.values().length];

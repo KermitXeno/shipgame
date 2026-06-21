@@ -1,6 +1,5 @@
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
@@ -52,7 +51,6 @@ public class Main extends ApplicationAdapter {
     private SystemWindows systemWindows;
     private PauseOverlay pauseOverlay;
     private RetroRenderer retro;
-    private boolean paused;
     private Controls controls;
 
     @Override
@@ -95,10 +93,7 @@ public class Main extends ApplicationAdapter {
 
     @Override
     public void render() {
-        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-            paused = !paused; // orders can still be issued while paused; they run once the tick resumes
-        }
-        if (!paused) {
+        if (!controls.isPaused()) { // pause is a bound InputAction toggled in Controls; orders set while paused run once the tick resumes
             ship.tick(Gdx.graphics.getDeltaTime());
         }
 
@@ -120,15 +115,16 @@ public class Main extends ApplicationAdapter {
         atmosphereRenderer.renderGas(modelBatch, environment);
         modelBatch.end();
 
-        retro.end(); // blit the low-res scene up to the window
+        retro.end(); // blit the low-res 3D scene up to the window
 
-        systemRenderer.renderLabels(camera, ship); // labels and UI stay full-res so they read clearly
-
+        // labels and UI draw at full resolution so the pixel font stays crisp (the low-res buffer can't
+        // hold the font below scale 3 without dropping glyph columns); the pixel font keeps the retro look
+        systemRenderer.renderLabels(camera, ship);
         ui.render(controls.getSelectionBox());
         energyUi.render();
         atmosphereUi.render();
         systemWindows.render();
-        if (paused) {
+        if (controls.isPaused()) {
             pauseOverlay.render();
         }
     }

@@ -340,5 +340,6 @@
     },
     { "type": "atmospherics", "x": 5, "y": 1, "w": 1, "h": 2}
   ],
-  "atmosphere": { "temperature": 293.15, "air": 104.5 }
+  "atmosphere": { "temperature": 293.15, "air": 104.5 },
+  "armor": 1.3
 }

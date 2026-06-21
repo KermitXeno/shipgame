@@ -28,4 +28,9 @@ public class HelmSystem extends ShipSystem {
     public SystemDecal decal() {
         return SystemDecal.color("HELM", 0.45f, 0.70f, 0.95f);
     }
+
+    @Override
+    public double equipmentMass() {
+        return 300;
+    }
 }

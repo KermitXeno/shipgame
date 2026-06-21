@@ -16,7 +16,7 @@ import java.util.List;
 public abstract class ShipSystem {
     /** Default starting temperature of a system and its surroundings (20 C). */
     public static final double AMBIENT_TEMPERATURE = 293.15;
-    private static final double THERMAL_MASS_PER_TILE = 3000; // J/K of the machine itself
+    private static final double THERMAL_MASS_PER_TILE = 300000; // J/K of the machine itself (100x scale)
 
     private Ship ship;
     private final List<Node> nodes = new ArrayList<>();
@@ -69,6 +69,11 @@ public abstract class ShipSystem {
     /** Heat generated per second while the system is in use (0 unless overridden, e.g. by the engine). */
     public double heatOutput() {
         return 0;
+    }
+
+    /** Mass of the system's machinery (kg), added to its tile; overridden per system. */
+    public double equipmentMass() {
+        return 500;
     }
 
     /** Heat capacity of the machine itself (J/K), scaling with its size. */

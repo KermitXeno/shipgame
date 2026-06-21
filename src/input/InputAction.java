@@ -5,5 +5,6 @@ public enum InputAction {
     SELECT,
     COMMAND,
     CAMERA_DRAG,
-    ADD_TO_SELECTION
+    ADD_TO_SELECTION,
+    PAUSE
 }

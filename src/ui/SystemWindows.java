@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import render.RetroFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.Disposable;
@@ -26,18 +27,19 @@ import java.util.List;
  * the 2D batch's y-up, with text vertically centred in its band.
  */
 public class SystemWindows implements Disposable {
-    private static final float W = 256f;
+    private static final float W = 360f;
     private static final float TH = 26f;   // title bar height
     private static final float RH = 24f;   // row height
     private static final float PAD = 8f;
     private static final float BTN = 20f;  // +/- button size
+    private static final float VAL_GAP = 104f; // space for an adjust row's value between the - and + buttons
     private static final float CLOSE = 16f;
     private static final float TXT = 15f;  // approx text height, for vertical centring
     private static final float BAR_H = 12f;
     private static final float GRAB = 7f;  // mix-boundary grab radius
 
     private final SpriteBatch batch = new SpriteBatch();
-    private final BitmapFont font = new BitmapFont();
+    private final BitmapFont font = RetroFont.pixel();
     private final GlyphLayout layout = new GlyphLayout();
     private final Texture pixel;
     private final Ship ship;
@@ -316,7 +318,7 @@ public class SystemWindows implements Disposable {
     }
 
     private float minusX(Win w) {
-        return w.x + W - PAD - BTN - 46f - BTN;
+        return w.x + W - PAD - BTN - VAL_GAP - BTN;
     }
 
     private float plusX(Win w) {
@@ -514,8 +516,8 @@ public class SystemWindows implements Disposable {
         rows.add(Row.adjust("Exhaust", e.isVentToSpace() ? "Space" : "Tank",
                 e::toggleVentToSpace, e::toggleVentToSpace));
         rows.add(Row.text(String.format("Chamber  %.0fK  %.0fkPa", e.chamber().temperature(), e.chamberPressure())));
-        rows.add(Row.text(String.format("Rated  %.0fK  %.0fkPa  cool %.0fK",
-                e.getHeatThreshold(), e.getPressureThreshold(), e.getRatedCooling())));
+        rows.add(Row.text(String.format("Rated  %.0fK  %.0fkPa", e.getHeatThreshold(), e.getPressureThreshold())));
+        rows.add(Row.text(String.format("Cooling  %.0fK", e.getRatedCooling())));
         rows.add(Row.text(String.format("Power  %+d / s", e.generationPerTick())));
         return rows;
     }
