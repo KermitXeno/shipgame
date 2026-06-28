@@ -217,7 +217,7 @@ public class Ship {
     /** Restores up to {@code amount} kJ of integrity, clamped to the max; returns the amount actually repaired. */
     public int repairHull(int amount) {
         int current = getHull();
-        int next = Math.max(0, Math.min(current + Math.max(0, amount), getMaxHull()));
+        int next = Math.clamp(current + Math.max(0, amount), 0, getMaxHull());
         hull = next;
         return next - current;
     }
